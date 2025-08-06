@@ -1,0 +1,109 @@
+import { getCategoryById } from "@/actions/category";
+import { getCityById } from "@/actions/city";
+import { isProductFavorited } from "@/actions/favorite";
+import { getSubCategoryById } from "@/actions/subCategory";
+import { getUserById } from "@/actions/user";
+import FavButton from "@/app/(business)/product-list/_components/Fav";
+import getCurrentUser from "@/lib/current-user";
+import { getCurrencySymbol } from "@/lib/utils";
+import { Product } from "@prisma/client";
+import Link from "next/link";
+import React from "react";
+
+type Props = {
+  product: Product;
+};
+
+const ProductCard = async ({ product }: Props) => {
+  const {
+    id,
+    phone,
+    imageUrl: productImg,
+    price,
+    currency,
+    createdAt,
+    cityId,
+    categoryId,
+    subCategoryId,
+    userId,
+  } = product;
+
+  const city = await getCityById(cityId!);
+  const category = await getCategoryById(categoryId!);
+  const subCategory = await getSubCategoryById(subCategoryId!);
+
+  if (!userId) return null;
+  const user = await getUserById(userId);
+  const imageUrl = user?.imageUrl;
+
+  const currentUser = (await getCurrentUser());
+  let isFavorited = false;
+  if (currentUser) {
+   isFavorited = await isProductFavorited(currentUser.id!, id);
+  }
+
+
+  return (
+    <div className="relative border-red-200 border rounded-lg overflow-hidden w-full h-[240px] shadow-red-200  transition-transform transform hover:scale-[1.01] hover:shadow-red-200 shadow-md">
+      <div className="relative w-full h-[150px] transition-opacity duration-500">
+        <Link href={`/products/${id}`}>
+          <img
+            className="cursor-pointer object-cover h-full w-full transition-transform duration-500 hover:scale-110"
+            src={productImg}
+            alt={phone}
+          />
+        </Link>
+      </div>
+
+      <div className="p-2">
+        <h1 className="font-bold">
+          {price} {getCurrencySymbol(currency)}
+        </h1>
+        <div className="flex justify-start items-center gap-3 text-[16px]">
+          <span>{category?.name}</span>
+          <span>{subCategory?.name}</span>
+        </div>
+        <div className="flex gap-2 justify-between items-center text-[#8d94ad]">
+          <span>{city?.name}</span>
+          {""}
+          <span className="text-[10px]">
+            {new Date(createdAt).toLocaleString()}
+          </span>
+        </div>
+      </div>
+
+      <div className="absolute top-0 right-0 p-2">
+        <FavButton
+          key={product.id}
+          product={product}
+          isFavorited={isFavorited}
+        />
+      </div>
+
+      <div className="absolute top-0 left-0 p-2 flex items-center gap-2 rounded-md overflow-hidden">
+        <img
+          className="rounded-xl transition-transform duration-500 hover:scale-110"
+          src={imageUrl}
+          alt="profile"
+          width={30}
+          height={30}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ProductCard.Skeleton = () => {
+//   return (
+//     <div className="border-red-200 border rounded-lg overflow-hidden w-full h-[240px] shadow-red-200 shadow-md">
+//       <div className="animate-pulse relative w-full h-[150px] bg-[#f1f1f1] transition-opacity duration-500"></div>
+//       <div className="p-2">
+//         <div className="animate-pulse h-4 bg-[#f1f1f1] w-1/2 mb-2"></div>
+//         <div className="animate-pulse h-4 bg-[#f1f1f1] w-1/4 mb-2"></div>
+//         <div className="animate-pulse h-4 bg-[#f1f1f1] w-1/4 mb-2"></div>
+//       </div>
+//     </div>
+//   );
+// };
+
+export default ProductCard;
