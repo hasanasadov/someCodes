@@ -1,0 +1,2 @@
+# someCodes
+for portfolio site
